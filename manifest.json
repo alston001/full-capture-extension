@@ -1,13 +1,23 @@
 {
     "manifest_version": 3,
-    "name": "Webpage Screenshot to PDF",
-    "version": "1.0",
-    "description": "Capture full webpage content including scrollable sections and export as PDF",
+    "name": "Full Capture Extension",
+    "version": "1.1",
+    "description": "Capture full webpages including tabs, accordions, and scrollable sections into PDF",
     "permissions": [
         "activeTab",
         "scripting"
     ],
     "action": {
-        "default_popup": "popup.html"
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icon16.png",
+            "48": "icon48.png",
+            "128": "icon128.png"
+        }
+    },
+    "icons": {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
     }
 }
