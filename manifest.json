@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Webpage Screenshot to PDF",
+    "version": "1.0",
+    "description": "Capture full webpage content including scrollable sections and export as PDF",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}

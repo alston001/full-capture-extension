@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 300px;
+            padding: 16px;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        h3 {
+            margin: 0 0 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            background: #4A90D9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background: #357ABD;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #555;
+            min-height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>📸 Webpage Screenshot</h3>
+    <button id="captureBtn">Capture to PDF</button>
+    <div id="status"></div>
+    <script src="jspdf.umd.min.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
