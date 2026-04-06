@@ -59,7 +59,10 @@ function _getPageInfo() {
 function _scrollMainTo(y) { window.scrollTo(0, y); }
 
 function _detectScrollables() {
-    const r = [];
+    // Clean up previous run's markers
+    var old = document.querySelectorAll("[data-scroll-uid]");
+    for (var k = 0; k < old.length; k++) old[k].removeAttribute("data-scroll-uid");
+    var r = [];
     for (const el of document.querySelectorAll("*")) {
         const s = window.getComputedStyle(el);
         if (el.scrollHeight > el.clientHeight + 10 &&
@@ -92,55 +95,45 @@ function _getElemRect(uid) {
 }
 
 function _detectTabGroups() {
-    const groups = [];
-    let uid = 0;
-
-    function reg(container, tabs) {
-        if (container.getAttribute("data-tg")) return;
-        if (tabs.length < 2) return;
-        const id = "tg_" + uid++;
-        container.setAttribute("data-tg", id);
-        tabs.forEach(function (t, i) { t.setAttribute("data-tab", id + "_" + i); });
-        groups.push({
-            uid: id,
-            tabCount: tabs.length,
-            tabLabels: tabs.map(function (t) { return t.textContent.trim().substring(0, 40); }),
-        });
-    }
+    var groups = [];
+    var uid = 0;
 
     // ARIA tabs
     var tablists = document.querySelectorAll('[role="tablist"]');
     for (var i = 0; i < tablists.length; i++) {
-        var tabs = tablists[i].querySelectorAll('[role="tab"]');
-        reg(tablists[i], Array.from(tabs));
+        var container = tablists[i];
+        if (container.getAttribute("data-tg")) continue;
+        var tabEls = container.querySelectorAll('[role="tab"]');
+        if (tabEls.length < 2) continue;
+        var id = "tg_" + uid++;
+        container.setAttribute("data-tg", id);
+        var labels = [];
+        for (var j = 0; j < tabEls.length; j++) {
+            tabEls[j].setAttribute("data-tab", id + "_" + j);
+            labels.push(tabEls[j].textContent.trim().substring(0, 40));
+        }
+        groups.push({ uid: id, tabCount: tabEls.length, tabLabels: labels });
     }
 
     // CSS class patterns
-    var sel = ".nav-tabs,.tab-list,.tabs-header";
-    var containers = document.querySelectorAll(sel);
+    var containers = document.querySelectorAll(".nav-tabs,.tab-list,.tabs-header");
     for (var i = 0; i < containers.length; i++) {
-        var kids = Array.from(containers[i].children).filter(function (c) {
-            return c.tagName === "BUTTON" || c.tagName === "A" || c.tagName === "LI";
-        });
-        reg(containers[i], kids);
-    }
-
-    // Heuristic
-    var divs = document.querySelectorAll("div, nav, ul");
-    for (var i = 0; i < divs.length; i++) {
-        var d = divs[i];
-        if (d.getAttribute("data-tg")) continue;
-        var kids = Array.from(d.children);
-        var btns = kids.filter(function (c) {
-            return (c.tagName === "BUTTON" || c.tagName === "A" || c.tagName === "LI") && c.offsetHeight > 0;
-        });
-        if (btns.length >= 2 && btns.length <= 10 && btns.length >= kids.length * 0.7) {
-            var hasActive = btns.some(function (c) {
-                return c.getAttribute("aria-selected") === "true" ||
-                    c.classList.contains("active") || c.classList.contains("selected");
-            });
-            if (hasActive) reg(d, btns);
+        var c = containers[i];
+        if (c.getAttribute("data-tg")) continue;
+        var kids = [];
+        for (var j = 0; j < c.children.length; j++) {
+            var ch = c.children[j];
+            if (ch.tagName === "BUTTON" || ch.tagName === "A" || ch.tagName === "LI") kids.push(ch);
         }
+        if (kids.length < 2) continue;
+        var id = "tg_" + uid++;
+        c.setAttribute("data-tg", id);
+        var labels = [];
+        for (var j = 0; j < kids.length; j++) {
+            kids[j].setAttribute("data-tab", id + "_" + j);
+            labels.push(kids[j].textContent.trim().substring(0, 40));
+        }
+        groups.push({ uid: id, tabCount: kids.length, tabLabels: labels });
     }
 
     return groups;
@@ -386,10 +379,27 @@ async function startCapture() {
 
         updateStatus("🔍 Detecting...");
         var scrollables = await run(tab.id, _detectScrollables);
-        var tabGroups = await run(tab.id, _detectTabGroups);
-        console.log("Detected:", { scrollables: scrollables, tabGroups: tabGroups, pageInfo: pageInfo });
-        updateStatus("✅ Found: " + scrollables.length + " scrollable, " + tabGroups.length + " tab group(s)");
-        await sleep(300);
+        var tabGroups = await run(tab.id, function () {
+            var groups = [];
+            // Clean up previous run's markers
+            var old = document.querySelectorAll("[data-tg],[data-tab]");
+            for (var k = 0; k < old.length; k++) { old[k].removeAttribute("data-tg"); old[k].removeAttribute("data-tab"); }
+            var tl = document.querySelectorAll('[role="tablist"]');
+            for (var i = 0; i < tl.length; i++) {
+                if (tl[i].getAttribute("data-tg")) continue;
+                var tabs = tl[i].querySelectorAll('[role="tab"]');
+                if (tabs.length < 2) continue;
+                var id = "tg_" + i;
+                tl[i].setAttribute("data-tg", id);
+                var labels = [];
+                for (var j = 0; j < tabs.length; j++) {
+                    tabs[j].setAttribute("data-tab", id + "_" + j);
+                    labels.push(tabs[j].textContent.trim().substring(0, 40));
+                }
+                groups.push({ uid: id, tabCount: tabs.length, tabLabels: labels });
+            }
+            return groups;
+        });
 
         updateStatus("📸 Capturing main page...");
         all.push(await captureMainPage(tab.id, pageInfo));
